@@ -25,13 +25,13 @@ http://www.642weather.com/weather/scripts.php
 
     // allow shortcode email_to
     // Webmaster,user1@example.com (must have name,email)
-    // multiple emails allowed (additional ones will be Cc:)
+    // multiple emails allowed
     // Webmaster,user1@example.com;user2@example.com
    if ( $shortcode_email_to != '') {
      if(preg_match("/,/", $shortcode_email_to) ) {
-       list($key, $value) = explode(",",$shortcode_email_to);
-       $key   = trim($key);
-       $value = trim($value);
+       list($key, $value) = preg_split('#(?<!\\\)\,#',$shortcode_email_to); //string will be split by "," but "\," will be ignored
+       $key   = trim(str_replace('\,',',',$key)); // "\," changes to ","
+       $value = trim(str_replace(';',',',$value)); // ";" changes to ","
        if ($key != '' && $value != '') {
              $mail_to    = $this->ctf_clean_input($value);
              $to_contact = $this->ctf_clean_input($key);
@@ -188,7 +188,7 @@ if ($have_attach){
 }
 
    // optional extra fields form post validation
-      for ($i = 1; $i <= $si_contact_gb['max_fields']; $i++) {
+      for ($i = 1; $i <= $si_contact_opt['max_fields']; $i++) {
         if ($si_contact_opt['ex_field'.$i.'_label'] != '' && $si_contact_opt['ex_field'.$i.'_type'] != 'fieldset-close') {
           if ($si_contact_opt['ex_field'.$i.'_type'] == 'fieldset') {
 
@@ -205,18 +205,30 @@ if ($have_attach){
 'yyyy-mm-dd' => esc_attr(__('yyyy-mm-dd', 'si-contact-form')),
 'yyyy.mm.dd' => esc_attr(__('yyyy.mm.dd', 'si-contact-form')),
 );
+               // required validate
                ${'ex_field'.$i} = ( !isset($_POST["si_contact_ex_field$i"]) ) ? '' : $this->ctf_clean_input($_POST["si_contact_ex_field$i"]);
                if( (${'ex_field'.$i} == '' || ${'ex_field'.$i} == $cal_date_array[$si_contact_opt['date_format']]) && $si_contact_opt['ex_field'.$i.'_req'] == 'true') {
                   $this->si_contact_error = 1;
                   ${'si_contact_error_ex_field'.$i} = ($si_contact_opt['error_field'] != '') ? $si_contact_opt['error_field'] : __('This field is required.', 'si-contact-form');
-                }
+               }
+               // max_len validate
+               if( ${'ex_field'.$i} != '' && $si_contact_opt['ex_field'.$i.'_max_len'] != '' && strlen(${'ex_field'.$i}) > $si_contact_opt['ex_field'.$i.'_max_len']) {
+                  $this->si_contact_error = 1;
+                  ${'si_contact_error_ex_field'.$i} = sprintf( __('Maximum of %d characters exceeded.', 'si-contact-form'), $si_contact_opt['ex_field'.$i.'_max_len'] );
+               }
+               // regex validate
+               if( ${'ex_field'.$i} != '' && $si_contact_opt['ex_field'.$i.'_regex'] != '' && !preg_match($si_contact_opt['ex_field'.$i.'_regex'],${'ex_field'.$i}) ) {
+                  $this->si_contact_error = 1;
+                  ${'si_contact_error_ex_field'.$i} = ($si_contact_opt['ex_field'.$i.'_regex_error'] != '') ? $si_contact_opt['ex_field'.$i.'_regex_error'] : __('Invalid input.', 'si-contact-form');
+               }
 
           }else if ($si_contact_opt['ex_field'.$i.'_type'] == 'hidden') {
                ${'ex_field'.$i} = ( !isset($_POST["si_contact_ex_field$i"]) ) ? '' : $this->ctf_clean_input($_POST["si_contact_ex_field$i"]);
           }else if ($si_contact_opt['ex_field'.$i.'_type'] == 'time') {
                ${'ex_field'.$i.'h'}  = $this->ctf_clean_input($_POST["si_contact_ex_field".$i."h"]);
                ${'ex_field'.$i.'m'}  = $this->ctf_clean_input($_POST["si_contact_ex_field".$i."m"]);
-               ${'ex_field'.$i.'ap'} = $this->ctf_clean_input($_POST["si_contact_ex_field".$i."ap"]);
+               if ($si_contact_opt['time_format'] == '12')
+                  ${'ex_field'.$i.'ap'} = $this->ctf_clean_input($_POST["si_contact_ex_field".$i."ap"]);
           }else if ($si_contact_opt['ex_field'.$i.'_type'] == 'attachment') {
               // need to test if a file was selected for attach.
               $ex_field_file['name'] = '';
@@ -312,16 +324,61 @@ if ($have_attach){
                   $this->si_contact_error = 1;
                   ${'si_contact_error_ex_field'.$i} = __('Error: A checkbox-multiple field is not configured properly in settings.', 'si-contact-form');
              }
-           }else{  // end label'] == 'checkbox'
+           }else if ($si_contact_opt['ex_field'.$i.'_type'] == 'email') {
+                  ${'ex_field'.$i} = ( !isset($_POST["si_contact_ex_field$i"]) ) ? '' : strtolower($this->ctf_clean_input($_POST["si_contact_ex_field$i"]));
+                  // required validate
+                  if(${'ex_field'.$i} == '' && $si_contact_opt['ex_field'.$i.'_req'] == 'true') {
+                    $this->si_contact_error = 1;
+                    ${'si_contact_error_ex_field'.$i} = ($si_contact_opt['error_field'] != '') ? $si_contact_opt['error_field'] : __('This field is required.', 'si-contact-form');
+                  }
+                  // max_len validate
+                  if( ${'ex_field'.$i} != '' && $si_contact_opt['ex_field'.$i.'_max_len'] != '' && strlen(${'ex_field'.$i}) > $si_contact_opt['ex_field'.$i.'_max_len']) {
+                     $this->si_contact_error = 1;
+                     ${'si_contact_error_ex_field'.$i} = sprintf( __('Maximum of %d characters exceeded.', 'si-contact-form'), $si_contact_opt['ex_field'.$i.'_max_len'] );
+                  }
+                  // regex validate
+                  if (${'ex_field'.$i} != '' && !$this->ctf_validate_email(${'ex_field'.$i})) {
+                    $this->si_contact_error = 1;
+                    ${'si_contact_error_ex_field'.$i} = __('Invalid e-mail address.', 'si-contact-form');
+                  }
+           }else if ($si_contact_opt['ex_field'.$i.'_type'] == 'url') {
+                  ${'ex_field'.$i} = ( !isset($_POST["si_contact_ex_field$i"]) ) ? '' : $this->ctf_clean_input($_POST["si_contact_ex_field$i"]);
+                  // required validate
+                  if(${'ex_field'.$i} == '' && $si_contact_opt['ex_field'.$i.'_req'] == 'true') {
+                    $this->si_contact_error = 1;
+                    ${'si_contact_error_ex_field'.$i} = ($si_contact_opt['error_field'] != '') ? $si_contact_opt['error_field'] : __('This field is required.', 'si-contact-form');
+                  }
+                  // max_len validate
+                  if( ${'ex_field'.$i} != '' && $si_contact_opt['ex_field'.$i.'_max_len'] != '' && strlen(${'ex_field'.$i}) > $si_contact_opt['ex_field'.$i.'_max_len']) {
+                     $this->si_contact_error = 1;
+                     ${'si_contact_error_ex_field'.$i} = sprintf( __('Maximum of %d characters exceeded.', 'si-contact-form'), $si_contact_opt['ex_field'.$i.'_max_len'] );
+                  }
+                  // regex validate
+                  if (${'ex_field'.$i} != '' && !$this->ctf_validate_url(${'ex_field'.$i})) {
+                    $this->si_contact_error = 1;
+                    ${'si_contact_error_ex_field'.$i} = __('Invalid URL.', 'si-contact-form');
+                  }
+           }else{
                 // text, textarea, radio, select, password
                 if ($si_contact_opt['ex_field'.$i.'_type'] == 'textarea' && $si_contact_opt['textarea_html_allow'] == 'true') {
                       ${'ex_field'.$i} = ( !isset($_POST["si_contact_ex_field$i"]) ) ? '' : $_POST["si_contact_ex_field$i"];
                 }else{
                       ${'ex_field'.$i} = ( !isset($_POST["si_contact_ex_field$i"]) ) ? '' : $this->ctf_clean_input($_POST["si_contact_ex_field$i"]);
                 }
+                // required validate
                 if(${'ex_field'.$i} == '' && $si_contact_opt['ex_field'.$i.'_req'] == 'true') {
                   $this->si_contact_error = 1;
                   ${'si_contact_error_ex_field'.$i} = ($si_contact_opt['error_field'] != '') ? $si_contact_opt['error_field'] : __('This field is required.', 'si-contact-form');
+                }
+                // max_len validate
+                if( ${'ex_field'.$i} != '' && $si_contact_opt['ex_field'.$i.'_max_len'] != '' && strlen(${'ex_field'.$i}) > $si_contact_opt['ex_field'.$i.'_max_len']) {
+                  $this->si_contact_error = 1;
+                  ${'si_contact_error_ex_field'.$i} = sprintf( __('Maximum of %d characters exceeded.', 'si-contact-form'), $si_contact_opt['ex_field'.$i.'_max_len'] );
+                }
+                // regex validate
+                if( ${'ex_field'.$i} != '' && $si_contact_opt['ex_field'.$i.'_regex'] != '' && !preg_match($si_contact_opt['ex_field'.$i.'_regex'],${'ex_field'.$i}) ) {
+                  $this->si_contact_error = 1;
+                  ${'si_contact_error_ex_field'.$i} = ($si_contact_opt['ex_field'.$i.'_regex_error'] != '') ? $si_contact_opt['ex_field'.$i.'_regex_error'] : __('Invalid input.', 'si-contact-form');
                 }
            }
         }  // end if label != ''
@@ -365,22 +422,22 @@ if ($have_attach){
             }
 	     } else {
            $this->si_contact_error = 1;
-           $si_contact_error_captcha = __('Could not read CAPTCHA token file.', 'si-contact-form');
-           $check_this_dir = untrailingslashit( $ctf_captcha_dir );
+           $si_contact_error_captcha = __('Could not read CAPTCHA token file. Try again.', 'si-contact-form');
+/*           $check_this_dir = untrailingslashit( $ctf_captcha_dir );
            $si_cec = '';
            if(is_writable($check_this_dir)) {
 				//echo '<span style="color: green">OK - Writable</span> ' . substr(sprintf('%o', fileperms($check_this_dir)), -4);
            } else if(!file_exists($check_this_dir)) {
               $si_cec .= '<br />';
               $si_cec .= __('There is a problem with the directory', 'si-contact-form');
-              $si_cec .= ' /si-contact-form/captcha-secureimage/captcha-temp/.<br />';
+              $si_cec .= ' /si-contact-form/captcha/temp/.<br />';
 	          $si_cec .= __('The directory is not found, a <a href="http://codex.wordpress.org/Changing_File_Permissions" target="_blank">permissions</a> problem may have prevented this directory from being created.', 'si-contact-form');
               $si_cec .= ' ';
               $si_cec .= __('Fixing the actual problem is recommended, but you can uncheck this setting on the contact form options page: "Use CAPTCHA without PHP session" and the captcha will work this way just fine (as long as PHP sessions are working).', 'si-contact-form');
               $si_contact_error_captcha .= $si_cec;
            } else {
              $si_cec .= '<br />';
-             $si_cec .= __('There is a problem with the directory', 'si-contact-form') .' /si-contact-form/captcha-secureimage/captcha-temp/.<br />';
+             $si_cec .= __('There is a problem with the directory', 'si-contact-form') .' /si-contact-form/captcha/temp/.<br />';
              $si_cec .= __('Directory Unwritable (<a href="http://codex.wordpress.org/Changing_File_Permissions" target="_blank">fix permissions</a>)', 'si-contact-form').'. ';
              $si_cec .= __('Permissions are: ', 'si-contact-form');
              $si_cec .= ' ';
@@ -398,7 +455,7 @@ if ($have_attach){
                 $si_cec .= __('Fixing the actual problem is recommended, but you can uncheck this setting on the contact form options page: "Use CAPTCHA without PHP session" and the captcha will work this way just fine (as long as PHP sessions are working).', 'si-contact-form');
                 $si_contact_error_captcha .= $si_cec;
 
-          }
+          }*/
 	    }
 	  }
     } else {
@@ -415,8 +472,9 @@ if ($have_attach){
 
       if (!isset($_SESSION['securimage_code_ctf_'.$form_id_num]) || empty($_SESSION['securimage_code_ctf_'.$form_id_num])) {
           $this->si_contact_error = 1;
-          $si_contact_error_captcha = __('Could not read CAPTCHA cookie. Make sure you have cookies enabled and not blocking in your web browser settings. Or another plugin is conflicting. See plugin FAQ.', 'si-contact-form');
-          $si_contact_error_captcha .= ' '. __('Alternatively, the admin can enable the setting "Use CAPTCHA without PHP Session", then temporary files will be used for storing the CAPTCHA phrase. This allows the CAPTCHA to function without using PHP Sessions. This setting is on the contact form admin settings page.', 'si-contact-form');
+          $si_contact_error_captcha = __('Could not read CAPTCHA cookie. Try again.', 'si-contact-form');
+          //$si_contact_error_captcha = __('Could not read CAPTCHA cookie. Make sure you have cookies enabled and not blocking in your web browser settings. Or another plugin is conflicting. See plugin FAQ.', 'si-contact-form');
+          //$si_contact_error_captcha .= ' '. __('Alternatively, the admin can enable the setting "Use CAPTCHA without PHP Session", then temporary files will be used for storing the CAPTCHA phrase. This allows the CAPTCHA to function without using PHP Sessions. This setting is on the contact form admin settings page.', 'si-contact-form');
       }else{
          if (empty($captcha_code) || $captcha_code == '') {
            $this->si_contact_error = 1;
@@ -451,13 +509,15 @@ if ($have_attach){
      }else{
           $subj = $si_contact_opt['email_subject'];
      }
-     $msg =  __('To', 'si-contact-form').": $to_contact$php_eol$php_eol";
+     $msg = $this->make_bold(__('To', 'si-contact-form')).": $to_contact$php_eol$php_eol";
      if ($name != '' || $email != '')  {
-        $msg .= __('From', 'si-contact-form').":$php_eol";
+        $msg .= $this->make_bold(__('From', 'si-contact-form')).":$php_eol";
         switch ($si_contact_opt['name_format']) {
           case 'name':
+             if($name != '') {
               $msg .= "$name$php_eol";
               $posted_data['from_name'] = $name;
+             }
           break;
           case 'first_last':
               $msg .= ($si_contact_opt['title_fname'] != '') ? $si_contact_opt['title_fname'] : __('First Name', 'si-contact-form').':';
@@ -502,14 +562,16 @@ if ($have_attach){
       if( is_string($data) )
           $subj = str_replace('['.$key.']',$data,$subj);
    }
+   $posted_form_name = ( $si_contact_opt['form_name'] != '' ) ? $si_contact_opt['form_name'] : sprintf(__('Form: %d', 'si-contact-form'),$form_id_num);
+   $subj = str_replace('[form_label]',$posted_form_name,$subj);
    $posted_data['subject'] = $subj;
    if ($si_contact_opt['ex_fields_after_msg'] == 'true' && $message != '') {
-        $msg .= __('Message', 'si-contact-form').":$php_eol$message$php_eol$php_eol";
+        $msg .= $this->make_bold(__('Message', 'si-contact-form')).":$php_eol$message$php_eol$php_eol";
         $posted_data['message'] = $message;
    }
 
    // optional extra fields
-   for ($i = 1; $i <= $si_contact_gb['max_fields']; $i++) {
+   for ($i = 1; $i <= $si_contact_opt['max_fields']; $i++) {
       if ( $si_contact_opt['ex_field'.$i.'_label'] != '' && $si_contact_opt['ex_field'.$i.'_type'] != 'fieldset-close') {
           if(preg_match('/^{inline}/',$si_contact_opt['ex_field'.$i.'_label'])) {
             // remove the {inline} modifier tag from the label
@@ -517,22 +579,26 @@ if ($have_attach){
           }
 
          if ($si_contact_opt['ex_field'.$i.'_type'] == 'fieldset') {
-             $msg .= $si_contact_opt['ex_field'.$i.'_label'].$php_eol;
+             $msg .= $this->make_bold($si_contact_opt['ex_field'.$i.'_label']).$php_eol;
          } else if ($si_contact_opt['ex_field'.$i.'_type'] == 'hidden') {
              list($exf_opts_label, $value) = preg_split('#(?<!\\\)\,#',$si_contact_opt['ex_field'.$i.'_label']); //string will be split by "," but "\," will be ignored
              $exf_opts_label   = trim(str_replace('\,',',',$exf_opts_label)); // "\," changes to ","
-             $msg .= $exf_opts_label."$php_eol${'ex_field'.$i}".$php_eol.$php_eol;
+             $msg .= $this->make_bold($exf_opts_label)."$php_eol${'ex_field'.$i}".$php_eol.$php_eol;
              $posted_data["ex_field$i"] = ${'ex_field'.$i};
          } else if ($si_contact_opt['ex_field'.$i.'_type'] == 'time') {
-             $msg .= $si_contact_opt['ex_field'.$i.'_label'].$php_eol.${'ex_field'.$i.'h'}.':'.${'ex_field'.$i.'m'}.' '.${'ex_field'.$i.'ap'}.$php_eol.$php_eol;
-             $posted_data["ex_field$i"] = ${'ex_field'.$i.'h'}.':'.${'ex_field'.$i.'m'}.' '.${'ex_field'.$i.'ap'};
+             if ($si_contact_opt['time_format'] == '12')
+               $concat_time = ${'ex_field'.$i.'h'}.':'.${'ex_field'.$i.'m'}.' '.${'ex_field'.$i.'ap'};
+             else
+               $concat_time = ${'ex_field'.$i.'h'}.':'.${'ex_field'.$i.'m'};
+             $msg .= $this->make_bold($si_contact_opt['ex_field'.$i.'_label']).$php_eol.$concat_time.$php_eol.$php_eol;
+             $posted_data["ex_field$i"] = $concat_time;
          } else if ($si_contact_opt['ex_field'.$i.'_type'] == 'attachment' && $si_contact_opt['php_mailer_enable'] != 'php' && ${'ex_field'.$i} != '') {
-             $msg .= $si_contact_opt['ex_field'.$i.'_label']."$php_eol * ".__('File is attached:', 'si-contact-form')." ${'ex_field'.$i}".$php_eol.$php_eol;
+             $msg .= $this->make_bold($si_contact_opt['ex_field'.$i.'_label'])."$php_eol * ".__('File is attached:', 'si-contact-form')." ${'ex_field'.$i}".$php_eol.$php_eol;
              $posted_data["ex_field$i"] = __('File is attached:', 'si-contact-form')." ${'ex_field'.$i}";
          } else if ($si_contact_opt['ex_field'.$i.'_type'] == 'select' || $si_contact_opt['ex_field'.$i.'_type'] == 'radio') {
              list($exf_opts_label, $value) = preg_split('#(?<!\\\)\,#',$si_contact_opt['ex_field'.$i.'_label']); //string will be split by "," but "\," will be ignored
              $exf_opts_label   = trim(str_replace('\,',',',$exf_opts_label)); // "\," changes to ","
-             $msg .= $exf_opts_label."$php_eol${'ex_field'.$i}".$php_eol.$php_eol;
+             $msg .= $this->make_bold($exf_opts_label)."$php_eol${'ex_field'.$i}".$php_eol.$php_eol;
              $posted_data["ex_field$i"] = ${'ex_field'.$i};
          } else if ($si_contact_opt['ex_field'.$i.'_type'] == 'select-multiple') {
              $exf_opts_array = array();
@@ -549,7 +615,7 @@ if ($have_attach){
                          // multiple options
                          $exf_opts_array = explode(";",$value);
                     }
-                    $msg .= $exf_opts_label.$php_eol;
+                    $msg .= $this->make_bold($exf_opts_label).$php_eol;
                     $posted_data["ex_field$i"] = '';
                     if (is_array(${'ex_field'.$i}) && ${'ex_field'.$i} != '') {
                        // loop
@@ -581,7 +647,7 @@ if ($have_attach){
                          // multiple options
                          $exf_opts_array = explode(";",$value);
                     }
-                    $msg .= $exf_opts_label.$php_eol;
+                    $msg .= $this->make_bold($exf_opts_label).$php_eol;
                     $posted_data["ex_field$i"] = '';
                     // loop
                     $ex_cnt = 1;
@@ -597,18 +663,25 @@ if ($have_attach){
              } else {  // checkbox single
                  if(${'ex_field'.$i} == 'selected') {
                    $si_contact_opt['ex_field'.$i.'_label'] = trim(str_replace('\,',',',$si_contact_opt['ex_field'.$i.'_label'])); // "\," changes to ","
-                   $msg .= $si_contact_opt['ex_field'.$i.'_label']."$php_eol * ".__('selected', 'si-contact-form').$php_eol.$php_eol;
+                   $msg .= $this->make_bold($si_contact_opt['ex_field'.$i.'_label'])."$php_eol * ".__('selected', 'si-contact-form').$php_eol.$php_eol;
                    $posted_data["ex_field$i"] = '* '.__('selected', 'si-contact-form');
                  }
              }
-         } else {  // text, textarea, date, password
+         } else {  // text, textarea, date, password, email, url
                if(${'ex_field'.$i} != ''){
                    if ($si_contact_opt['ex_field'.$i.'_type'] == 'textarea' && $si_contact_opt['textarea_html_allow'] == 'true') {
-                        $msg .= $si_contact_opt['ex_field'.$i.'_label'].$php_eol.$this->ctf_stripslashes(${'ex_field'.$i}).$php_eol.$php_eol;
+                        $msg .= $this->make_bold($si_contact_opt['ex_field'.$i.'_label']).$php_eol.$this->ctf_stripslashes(${'ex_field'.$i}).$php_eol.$php_eol;
                         $posted_data["ex_field$i"] = ${'ex_field'.$i};
                    }else{
-                        $msg .= $si_contact_opt['ex_field'.$i.'_label'].$php_eol.${'ex_field'.$i}.$php_eol.$php_eol;
+                        $msg .= $this->make_bold($si_contact_opt['ex_field'.$i.'_label']).$php_eol.${'ex_field'.$i}.$php_eol.$php_eol;
                         $posted_data["ex_field$i"] = ${'ex_field'.$i};
+                        if ($si_contact_opt['ex_field'.$i.'_type'] == 'email' && $email == '' && $si_contact_opt['email_type'] == 'not_available') {
+                          // admin set the standard email field 'not_avaulable' then added an email extra field type.
+                          // lets capture that as the 'from_email'.
+                           $email = ${'ex_field'.$i};
+                           $this->ctf_forbidifnewlines($email);
+                           $posted_data['from_email'] = $email;
+                       }
                    }
                }
          }
@@ -625,7 +698,7 @@ if ($have_attach){
                $key   = trim($key);
                $value = trim($value);
                if ($key != '' && $value != '') {
-                 $msg .= $key.$php_eol.$this->ctf_stripslashes($value).$php_eol.$php_eol;
+                 $msg .= $this->make_bold($key).$php_eol.$this->ctf_stripslashes($value).$php_eol.$php_eol;
                  $posted_data[$key] = $value;
               }
           }
@@ -633,7 +706,7 @@ if ($have_attach){
       }
    }
     if ($si_contact_opt['ex_fields_after_msg'] != 'true' && $message != '') {
-        $msg .= __('Message', 'si-contact-form').":$php_eol$message$php_eol$php_eol";
+        $msg .= $this->make_bold(__('Message', 'si-contact-form')).":$php_eol$message$php_eol$php_eol";
         $posted_data['message'] = $message;
     }
 
@@ -671,9 +744,14 @@ if ($have_attach){
     $userdomain = '';
     $userdomain = gethostbyaddr($_SERVER['REMOTE_ADDR']);
     $user_info_string = '';
-    if ($user_ID != '' && !current_user_can('level_10') ) {
+    if ($user_ID != '') {
         //user logged in
-        $user_info_string .= __('From a WordPress user', 'si-contact-form').': '.$current_user->user_login . $php_eol;
+       if ($current_user->user_login != '') $user_info_string .= __('From a WordPress user', 'si-contact-form').': '.$current_user->user_login . $php_eol;
+       if ($current_user->user_email != '') $user_info_string .= __('User email', 'si-contact-form').': '.$current_user->user_email . $php_eol;
+       if ($current_user->user_firstname != '') $user_info_string .= __('User first name', 'si-contact-form').': '.$current_user->user_firstname . $php_eol;
+       if ($current_user->user_lastname != '') $user_info_string .= __('User last name', 'si-contact-form').': '.$current_user->user_lastname . $php_eol;
+       if ($current_user->display_name != '') $user_info_string .= __('User display name', 'si-contact-form').': '.$current_user->display_name . $php_eol;
+       if ($current_user->ID != '') $user_info_string .= __('User ID', 'si-contact-form').': '.$current_user->ID . $php_eol;
     }
     $user_info_string .= __('Sent from (ip address)', 'si-contact-form').': '.$_SERVER['REMOTE_ADDR']." ($userdomain)".$php_eol;
     if ( $geo_loc != '' ) {
@@ -790,8 +868,27 @@ if ($have_attach){
     }
     $header_php =  "From: $this->si_contact_from_name <$this->si_contact_from_email>\n"; // header for php mail only
 
+    // process $mail_to user1@example.com,user2@example.com,user3@example.com,[cc]user4@example.com,[bcc]user5@example.com
+    // some are cc, some are bcc
+    $mail_to_arr = explode( ',', $mail_to );
+    $mail_to = '';
     if ($ctf_email_address_bcc != '')
+            $ctf_email_address_bcc = $ctf_email_address_bcc. ',';
+	foreach ( $mail_to_arr as $key => $this_mail_to ) {
+	       if (preg_match("/\[bcc\]/i",$this_mail_to) )  {
+                 $this_mail_to = str_replace('[bcc]','',$this_mail_to);
+                 $ctf_email_address_bcc .= "$this_mail_to,";
+           }else{
+                 $this_mail_to = str_replace('[cc]','',$this_mail_to);
+                 $mail_to .= "$this_mail_to,";
+           }
+    }
+    $mail_to = rtrim($mail_to, ',');
+
+    if ($ctf_email_address_bcc != '') {
+            $ctf_email_address_bcc = rtrim($ctf_email_address_bcc, ',');
             $header .= "Bcc: $ctf_email_address_bcc\n"; // for php mail and wp_mail
+    }
 
     if ($si_contact_opt['email_reply_to'] != '') { // custom reply_to
          $header .= "Reply-To: ".$si_contact_opt['email_reply_to']."\n"; // for php mail and wp_mail
@@ -898,6 +995,9 @@ if ($have_attach){
              $msg = str_replace('['.$key.']',$data,$msg);
            }
        }
+       $subj = preg_replace('/(\[ex_field)(\d+)(\])/','',$subj); // remove empty ex_field tags
+       $msg = preg_replace('/(\[ex_field)(\d+)(\])/','',$msg);   // remove empty ex_field tags
+       $subj = str_replace('[form_label]',$posted_form_name,$subj);
 
        // wordwrap email message
        if ($ctf_wrap_message)

@@ -28,6 +28,12 @@ if ( isset( $_POST['submit'] ) ) {
 		$a['enable-page-coms'] = 0;
 	}
 
+	if ( isset( $_POST['enable-zoom'] ) ) {
+		$a['enable-zoom'] = 1;
+	} else {
+		$a['enable-zoom'] = 0;
+	}
+
 	if ( isset( $_POST['enable-cats-button'] ) ) {
 		$a['enable-cats-button'] = 1;
 	} else {
@@ -267,7 +273,7 @@ if ( isset( $_POST['submit'] ) ) {
 	$values = serialize($a);
 	update_option('bnc_iphone_pages', $values);
 } elseif ( isset( $_POST['reset'] ) ) {
-	update_option( 'bnc_iphone_pages', '' );
+	update_option( 'bnc_iphone_pages', false );
 }
  	
 do_action( 'wptouch_load_locale' );

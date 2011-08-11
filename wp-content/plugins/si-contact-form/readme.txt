@@ -4,7 +4,7 @@ Author URI: http://www.642weather.com/weather/scripts.php
 Donate link: http://www.FastSecureContactForm.com/donate
 Tags: Akismet, captcha, contact, contact form, form, mail, email, spam, multilingual, wpmu, buddypress
 Requires at least: 2.8
-Tested up to: 3.1
+Tested up to: 3.2.1
 Stable tag: trunk
 
 A super customizable contact form that lets your visitors send you email. Blocks all automated spammers. No templates to mess with.
@@ -64,7 +64,6 @@ Captcha Image Support:
  * Uses Open-source free PHP CAPTCHA library by www.phpcaptcha.org (customized version included)
  * Abstract background with multi colored, angled, and transparent text
  * Arched lines through text
- * Visual and Audible CAPTCHA
  * Refresh button to reload captcha if you cannot read it
  * CAPTCHA can be disabled in Options
 
@@ -80,7 +79,7 @@ Requirements/Restrictions:
 
 2. Activate the plugin through the `Plugins` menu in WordPress. Look for the Settings link to configure the Options. 
 
-3. You must add the shortcode `[si-contact-form form='1']` in a Page(not a Post). That Page will become your Contact Form. Here is how: Log into your blog admin dashboard. Click `Pages`, click `Add New`, add a title to your page, enter the shortcode `[si-contact-form form='1']` in the page, uncheck `Allow Comments`, click `Publish`. 
+3. Add the shortcode `[si-contact-form form='1']` in a Page, Post, or Text Widget. Here is how: Log into your blog admin dashboard. Click `Pages`, click `Add New`, add a title to your page, enter the shortcode `[si-contact-form form='1']` in the page, uncheck `Allow Comments`, click `Publish`. 
 
 4. Test an email from your form.
 
@@ -121,6 +120,7 @@ At this point it would be useful to read [Installing WordPress in Your Language]
 The following translations are included in the download zip file:
 
 * Albanian (sq_AL) - Translated by [Romeo Shuka](http://www.romeolab.com)
+* Arabic (ar) partial translation - Translated by Jasmine Hassan
 * Bulgarian (bg_BG) - Translated by [Dimitar Atanasov](http://chereshka.net)
 * Chinese (zh_CN) - Translated by [Awu](http://www.awuit.cn/) 
 * Danish (da_DK) - Translated by [GeorgWP](http://wordpress.blogos.dk/wpdadkdownloads/)
@@ -133,6 +133,7 @@ The following translations are included in the download zip file:
 * Hungarian (hu_HU) - Translated by [Jozsef Burgyan](http://dmgmedia.hu)
 * Italian (it_IT) - Translated by [Gianni Diurno](http://gidibao.net/ "Gianni Diurno")
 * Japanese (ja) - Translated by [Ichiro Kozuka]
+* Norwegian Bokmal (nb_NO) - Translated by [Tore Johnny Bratveit](http://punktlig-ikt.no)
 * Polish (pl_PL) - Translated by [Pawel Mezyk]
 * Portuguese (pt_PT) - Translated by [AJBFerreira Blog](http://pws.op351.net/)
 * Portuguese Brazil (pt_BR) - Translated by [Rui Alao]
@@ -183,8 +184,70 @@ For more help... [See the official FAQ at FastSecureContactForm.com](http://www.
 
 == Changelog ==
 
-- Fix HTML notes would not appear before a fieldset open.
+= 3.0.3.2 =
+- (27 Jul 2011) - Fixed medium XSS HTB23036 - as advised by High-Tech Bridge SA Security Research Lab.
+- Fix, added missing 00 to 24 hour time select.
+
+= 3.0.3.1 =
+- (05 Jul 2011) - Tested / fixed to be compatible with WP 3.2
+- Fix for `&apos` entity showing for single quotes on IE7, IE8
+- Fix for CAPTCHA input field out of position on IE7 with labels left CSS setting.
+
+= 3.0.3 =
+- (16 Jun 2011) - Tested compatible with WP 3.2 Beta 2
+- "Number of available extra fields" setting is now for each form # instead of all forms.
+- CAPTCHA audio feature removed.
+- Misc. admin Fixes.
+- Another fix for empty autoresponder field tags were showing.
+- Calendar style improvements.
+
+= 3.0.2 =
+- (08 Jun 2011) - Fixed error: Undefined variable: securimage_url 
+- Added id tags to submit and reset buttons.
+- Updated Italian language (it_IT) - Translated by [Gianni Diurno](http://gidibao.net/ "Gianni Diurno")
+
+= 3.0.1 =
+- (02 Jun 2011) - CAPTCHA Audio feature is disabled by Mike Challis until further notice because a proof of concept code CAPTCHA solving exploit was released - Security Advisory - SOS-11-007. CAPTCHA image is not involved.
+- Security enhancements for possible low level XSS exploit in admin settings: thanks to [Julio Potier](http://secu.boiteaweb.fr/).
+- Fix javascript error when CAPTCHA audio is disabled.
+- Fixed missing width/height attributes for CAPTCHA images.
+- Fixed backslash problem on Restore Settings tool.
+- Fixed empty autoresponder field tags were showing.
+- Fixed various style improvements for admin error messages.
+- Added a popup alert for when changing the number of forms or extra fields.
+- Added setting: CSS style for CAPTCHA input field on the contact form.
+- Added Norwegian Bokmal (nb_NO) - Translated by [Tore Johnny Bratveit](http://punktlig-ikt.no)
+
+= 3.0 =
+- (25 Apr 2011) - Added (extra fields) default text can be set for text or textarea.
+- Added (extra fields) max length can be set for password, text or textarea.
+- Added (extra fields) attributes can be set for password, text or textarea.
+- Added (extra fields) validation regex can be set for password, text or textarea.
+- Added (extra fields) validation regex fail message can be set for password, text or textarea.
+- Added (extra fields) label or input CSS can be set individually for any extra field.
+- Added (extra fields) HTML before and after can be set.
+- Added (extra fields) 'email' extra field type with validation.
+- Added (extra fields) 'url' extra field type with validation.
+- Added (extra fields) first option of select field type can be in brackets to indicate [Please select].
+- Added 'email' field pulls up proper keyboard on iphone/ipad.
+- Added optional [form_label] tag for subject. 
+- Added time format option for 'time' extra field (select 12 or 24 hour).
+- Improved extra fields admin GUI.
+- Added Field labels are bold when HTML email is enabled.
+- Fix - trim spaces on extra field multiple options.
+- Fix - attached field allowed types separated by spaces.
+- Fix - bug in restore tool that could cause data loss.
+- Email validate DNS check disabled by default because some servers have big delay.
+
+= 2.9.8.6 =
+- (27 Mar 2011) - Fix HTML notes would not appear before a fieldset open.
 - Fix horizontal display feature for radio and multiple checkbox after post.
+- Fixed date calender on some themes by adding a high z-index to the CSS.
+- Added ability to use comma in "Email To:" name. If you need to use a comma besides the one needed to separate the name and email, escape it with a back slash, like this: \,
+- Added ability to specify cc and bcc in "Email To:". Example: Webmaster,user1@example.com;[cc]user2@example.com;[bcc]user3@example.com
+- Added more WordPress logged in user details to the email message footer.
+- Added optional "Are you sure?" form submit popup message (message can also be changed).
+- Added Arabic (ar) partial translation - Translated by Jasmine Hassan
 
 = 2.9.8.5 =
 - (08 Mar 2011) - Improved required date fields

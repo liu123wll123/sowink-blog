@@ -155,7 +155,7 @@ blockquote {
 	margin-right: auto;
 }
 
-.post object, .post embed, .post video, .post iframe {
+.post object, .post embed, .post video {
 	width: 100% !important;
 	height: auto;
 	max-height: 280px;
@@ -248,18 +248,15 @@ blockquote {
 	margin-right: 8px;
 	position: relative;
 	bottom: 3px;
-	color: #fff;
-	text-shadow: #000000 0px 1px 1px;
+	color: #eee;
+	text-shadow: #000000 0px -1px 1px;
 	display: block;
 	float: right;
 	font: bold 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	height: 18px;
 	padding: 6px 2px 2px 0;
 }
-#drop-fade a.top.left {
-    float: left;
-    margin-left: 8px;
-}
+
 #drop-fade #prowlopen {
 	padding-left: 18px;
 	background: url(../core/core-images/menu-sprite.png) no-repeat 2px -60px;
@@ -2015,12 +2012,7 @@ p.subscribe-to-comments input#subscribe {
 	margin: 0;
 	padding: 0 25px 5px;
 }
-.footlink {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 5px 8px 3px;
-}
+
 /* @group Switch Link */
 
 #wptouch-switch-link {

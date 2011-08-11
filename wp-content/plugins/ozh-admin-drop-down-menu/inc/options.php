@@ -116,11 +116,6 @@ function wp_ozh_adminmenu_options_page() {
 	<?php echo wp_ozh_adminmenu__("Remove the whole header bar for maximum screen real estate. Note: The quick link to your blog will be added to the menu, the Logout link in the Users sub-menu."); ?>
 	</td></tr>
 
-    <tr id="oam_fav_row"><th scope="row"><?php echo wp_ozh_adminmenu__('Favorite Actions'); ?></th>
-	<td><label><?php wp_ozh_adminmenu_checkbox('displayfav'); ?>  <?php echo wp_ozh_adminmenu__('Display Favorite Actions'); ?></label><br/>
-	<?php echo wp_ozh_adminmenu__("Just in case you realize you don't need this anymore with such a fast and usable menu."); ?>
-	</td></tr>
-	
     <tr><th scope="row"><?php echo wp_ozh_adminmenu__('Break Long Lists'); ?></th>
 	<td><label><?php printf(wp_ozh_adminmenu__('Break if more than %s menu entries'), "<input type=\"text\" value=\"$too_many_plugins\" size=\"2\" name=\"oam_too_many_plugins\">"); ?></label><br/>
 	<?php echo wp_ozh_adminmenu__('If a dropdown gets longer than this value, it will switch to horizontal mode so that it will hopefully fit in your screen (requires javascript)'); ?>
@@ -267,7 +262,7 @@ function wp_ozh_adminmenu_options_page() {
 	<li><?php echo wp_ozh_adminmenu__('you want to uninstall the plugin and leave no unnecessary entries in your database.');?></li>
 	<li><?php echo wp_ozh_adminmenu__('you want all settings to be reverted to their default values');?></li>
 	</ul>
-	<p class="submit" style="border-top:0px;padding:0;"><input style="color:red" name="submit" value="<?php echo wp_ozh_adminmenu__('Reset Settings');?>" onclick="return(confirm('<?php echo js_escape(wp_ozh_adminmenu__('Really do?'));?>'))" type="submit" /></p>
+	<p class="submit" style="border-top:0px;padding:0;"><input style="color:red" name="submit" value="<?php echo wp_ozh_adminmenu__('Reset Settings');?>" onclick="return(confirm('<?php echo esc_js(wp_ozh_adminmenu__('Really do?'));?>'))" type="submit" /></p>
 	<p><?php echo wp_ozh_adminmenu__('There is no undo, so be very sure you want to click the button!');?></p>
 	
 	</form>
@@ -277,8 +272,8 @@ function wp_ozh_adminmenu_options_page() {
 }
 
 // Sanitize string for display: escape HTML but preserve UTF8 (or whatever)
-function wp_ozh_adminmenu_sanitize($string) {
-	return stripslashes(attribute_escape($string));
+function wp_ozh_adminmenu_sanitize( $string ) {
+	return stripslashes( esc_attr( $string ) );
 	//return stripslashes(htmlentities($string, ENT_COMPAT, get_bloginfo('charset')));
 }
 

@@ -36,7 +36,7 @@ include( dirname(__FILE__) . '/../core/core-header.php' );
 	</div>
 <?php } ?>
  <!-- #start The Search Overlay -->
-	<div id="wptouch-search">
+	<div id="wptouch-search"> 
  		<div id="wptouch-search-inner">
 			<form method="get" id="searchform" action="<?php bloginfo('url'); ?>/">
 				<input type="text" placeholder="<?php echo __( "Search...", "wptouch" ); ?>" name="s" id="s" /> 
@@ -125,10 +125,7 @@ include( dirname(__FILE__) . '/../core/core-header.php' );
 
 <div id="drop-fade">
 	<?php if (bnc_is_search_enabled()) { ?>			    
-        <a id="searchopen" class="top" href="javascript:return false;"><?php _e( 'Search', 'wptouch' ); ?></a>
-    	<a class="top left" href="http://blog.sowink.com/category/advice">Advice</a>
-    	<a class="top left" href="http://blog.sowink.com/category/events">Events</a>
-    	<a class="top left" href="http://blog.sowink.com/category/pandwink">Ask Prof. Pandwink</a>
+    	<a id="searchopen" class="top" href="javascript:return false;"><?php _e( 'Search', 'wptouch' ); ?></a>
 	<?php } ?>
 
 	<?php if (bnc_is_prowl_direct_message_enabled()) { ?>			    
