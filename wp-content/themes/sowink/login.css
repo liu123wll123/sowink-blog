@@ -1,0 +1,106 @@
+@charset "UTF-8";
+/* CSS Document */
+
+* {
+	margin:0;
+	padding:0;
+}
+html {
+	background: #e1f2d6 url(images/bg.png) repeat fixed;
+}
+
+body {
+	padding-top:30px;
+	font:11px "Lucida Grande", Verdana, Arial, "Bitstream Vera Sans", sans-serif;
+}
+
+html .login #nav a:link, a:visited {
+color: #8b2be3 !important;
+text-decoration: none;
+font-weight: bold;
+}
+
+html .login #nav a:hover {
+color: #a856f2 !important;
+}
+
+h1 {
+	background: url(images/login-pengwink.png) no-repeat top left;
+	text-indent:-9999px;
+	overflow:hidden;
+	padding-bottom:15px;
+	display: block;
+	position: absolute;
+	top: -369px;
+	left: 14px;
+	height: 642px;
+	width: 477px;
+	z-index: -10;
+}
+
+h1 a {
+display: none;
+}
+
+#backtoblog {
+	border-bottom: none;
+	background:#fff;
+}
+
+#backtoblog a {
+}
+
+form {
+	z-index: 10;
+	display: block;
+	-moz-border-radius:11px;
+	-khtml-border-radius:11px;
+	-webkit-border-radius:11px;
+	border-radius:5px;
+	background:#fff;
+	border:1px solid #e5e5e5;
+	-moz-box-shadow: #242221 0 4px 18px;
+	-webkit-box-shadow:#242221 0 4px 18px;
+	-khtml-box-shadow:#242221 0 4px 18px;
+	box-shadow:#242221 0 4px 18px;
+}
+
+#login {
+	margin: 32em auto 0;
+	width: 340px;
+	position: relative;
+}
+
+#login_error, .message {
+	margin:0 0 16px 8px;
+	border-width:1px;
+	border-style:solid;
+	padding:12px;
+	-moz-border-radius:3px;
+	-khtml-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+}
+#nav {
+	margin:0 0 0 8px;
+	padding:16px;
+}
+
+#user_pass, #user_login, #user_email {
+	font-size:24px;
+	width:97%;
+	padding:3px;
+	margin-top:2px;
+	margin-right:6px;
+	margin-bottom:16px;
+	border:1px solid #e5e5e5;
+	background:#fbfbfb;
+}
+
+input {
+	color:#555;
+}
+
+.clear {
+	clear:both;
+}

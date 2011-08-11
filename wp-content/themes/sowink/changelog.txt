@@ -1,0 +1,29 @@
+Version 1.1.6 (02.17.11)
+FIXED: Custom Styles Not Working With IE7 (style.css, functions.php, style-custom.php, options/custom-styles.php)
+REVISED: Added Theme Locations for Custom Menus (functions.php, header.php)
+
+
+Version 1.1.5 (12.08.10)
+FIXED: Post Float Bug (style.css, index.php, single.php, page.php)
+
+
+Version 1.1.2 (10.20.10)
+FIXED: Update Notifications Server Incompatibility (functions.php)
+
+
+Version 1.1.1 (08.17.10)
+FIXED: Custom Favicon, Logo and Background Uploader Fix (functions.php, functions.css)
+
+
+Version 1.1 (08.16.10)
+NEW: Added Custom Favicon Options (functions.php, header.php)
+REVISED: Updated Logo Customization Options (functions.php, header.php)
+REVISED: Updated Background Customization Options (functions.php)
+
+
+Version 1.0.1 (07.26.10)
+NEW: Auto-Update Notifications via the WordPress Admin (functions.php, update-notify.php)
+
+
+Version 1.0 (07.23.10)
+NEW: Initial Release
