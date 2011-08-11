@@ -154,8 +154,8 @@ class ExportBase {
                 $this->rowFilter->setComparisonValuePreprocessor(new DereferenceShortcodeVars);
                 $this->rowFilter->parseFilterString($this->options['filter']);
                 if ($this->debug) {
-                    echo '<pre>';
-                    print_r($this->rowFilter->getFilterTree());
+                    echo '<pre>\'' . $this->options['filter'] . "'\n";
+                    print_r($this->rowFilter->tree);
                     echo '</pre>';
                 }
             }
@@ -270,10 +270,15 @@ class ExportBase {
         return $showSubmitField;
     }
 
+    /**
+     * @param string|array $formName (if array, must be array of string)
+     * @param null|string $submitTimeKeyName
+     * @return void
+     */
     protected function setDataIterator($formName, $submitTimeKeyName = null) {
         $sql = $this->getPivotQuery($formName);
         $this->dataIterator = new CFDBQueryResultIterator();
-        $this->dataIterator->fileColumns = $this->getFileMetaData($formName);
+//        $this->dataIterator->fileColumns = $this->getFileMetaData($formName);
 
         $queryOptions = array();
         if ($submitTimeKeyName) {
@@ -290,26 +295,40 @@ class ExportBase {
         $this->dataIterator->displayColumns = $this->getColumnsToDisplay($this->dataIterator->columns);
     }
 
-    protected function &getFileMetaData($formName) {
-        global $wpdb;
-        $tableName = $this->plugin->getSubmitsTableName();
-        $rows = $wpdb->get_results(
-            "select distinct `field_name`
-from `$tableName`
-where `form_name` = '$formName'
-and `file` is not null");
+//    protected function &getFileMetaData($formName) {
+//        global $wpdb;
+//        $tableName = $this->plugin->getSubmitsTableName();
+//        $rows = $wpdb->get_results(
+//            "select distinct `field_name`
+//from `$tableName`
+//where `form_name` = '$formName'
+//and `file` is not null");
+//
+//        $fileColumns = array();
+//        foreach ($rows as $aRow) {
+//            $files[] = $aRow->field_name;
+//        }
+//        return $fileColumns;
+//    }
 
-        $fileColumns = array();
-        foreach ($rows as $aRow) {
-            $files[] = $aRow->field_name;
-        }
-        return $fileColumns;
-    }
-
+    /**
+     * @param string|array $formName (if array, must be array of string)
+     * @param bool $count
+     * @return string
+     */
     public function &getPivotQuery($formName, $count = false) {
         global $wpdb;
         $tableName = $this->plugin->getSubmitsTableName();
-        $rows = $wpdb->get_results("SELECT DISTINCT `field_name`, `field_order` FROM `$tableName` WHERE `form_name` = '$formName' ORDER BY field_order");
+
+        $formNameClause = '';
+        if (is_array($formName)) {
+            $formNameClause = 'WHERE `form_name` in ( \'' . implode('\', \'', $formName) . '\' )';
+        }
+        else if ($formName !== null) {
+            $formNameClause =  "WHERE `form_name` = '$formName'";
+        }
+
+        $rows = $wpdb->get_results("SELECT DISTINCT `field_name`, `field_order` FROM `$tableName` $formNameClause ORDER BY field_order");
         $fields = array();
         foreach ($rows as $aRow) {
             if (!in_array($aRow->field_name, $fields)) {
@@ -325,9 +344,9 @@ and `file` is not null");
             $sql .= ",\n max(if(`field_name`='$aCol', `field_value`, null )) AS '$aCol'";
         }
         if (!$count) {
-            $sql .= ",\n GROUP_CONCAT(if(`file` is null or length(file) = 0, null, `field_name`)) AS fields_with_file";
+            $sql .= ",\n GROUP_CONCAT(if(`file` is null or length(`file`) = 0, null, `field_name`)) AS 'fields_with_file'";
         }
-        $sql .=  "\nFROM `$tableName` \nWHERE `form_name` = '$formName' \nGROUP BY `submit_time` ";
+        $sql .=  "\nFROM `$tableName` \n$formNameClause \nGROUP BY `submit_time` ";
         if ($count) {
             $sql .= ') form';
         }
@@ -347,9 +366,9 @@ and `file` is not null");
                         $anOrderBy = trim(substr($anOrderBy, 0, -4));
                     }
                     if ($anOrderBy == 'Submitted') {
-                        $anOrderBy = "submit_time";
+                        $anOrderBy = 'submit_time';
                     }
-                    if (in_array($anOrderBy, $fields)) {
+                    if (in_array($anOrderBy, $fields) || $anOrderBy == 'submit_time') {
                         $orderBys[] = '`' . $anOrderBy . '`' . $ascOrDesc;
                     }
                 }
@@ -376,9 +395,14 @@ and `file` is not null");
                 $sql .= "\nLIMIT " . $this->options['limit'];
             }
         }
+        //echo $sql; // debug
         return $sql;
     }
 
+    /**
+     * @param string|array $formName (if array, must be array of string)
+     * @return int
+     */
     public function getDBRowCount($formName) {
         global $wpdb;
         $count = 0;

@@ -33,6 +33,17 @@ class ExportToHtmlTemplate extends ExportBase implements CFDBExport {
         $this->setOptions($options);
         $this->setCommonOptions(true);
 
+        $filelinks = '';
+        $wpautop = false;
+        if ($this->options && is_array($this->options)) {
+            if (isset($this->options['filelinks'])) {
+                $filelinks = $this->options['filelinks'];
+            }
+            if (isset($this->options['wpautop'])) {
+                $wpautop = $this->options['wpautop'] == 'true';
+            }
+        }
+
         // Security Check
         if (!$this->isAuthorized()) {
             $this->assertSecurityErrorMessage();
@@ -52,7 +63,8 @@ class ExportToHtmlTemplate extends ExportBase implements CFDBExport {
         }
 
         // Get the data
-        $this->setDataIterator($formName);
+        $submitTimeKeyName = 'Submit_Time_Key';
+        $this->setDataIterator($formName, $submitTimeKeyName);
 
 
         $matches = array();
@@ -71,18 +83,79 @@ class ExportToHtmlTemplate extends ExportBase implements CFDBExport {
         }
 
 
+        // WordPress likes to wrap the content in <br />content<p> which messes up things when
+        // you are putting
+        //   <tr><td>stuff<td></tr>
+        // as the content because it comes out
+        //   <br /><tr><td>stuff<td></tr><p>
+        // which messed up the table html.
+        // So we try to identify that and strip it out.
+        // This is related to http://codex.wordpress.org/Function_Reference/wpautop
+        // see also http://wordpress.org/support/topic/shortcodes-are-wrapped-in-paragraph-tags?replies=4
+        if (!$wpautop) {
+            //echo 'Initial: \'' . htmlentities($options['content']) . '\'';
+            if (substr($options['content'], 0, 6) == '<br />' &&
+                substr($options['content'], -3, 3) == '<p>') {
+                $options['content'] = substr($options['content'], 6, strlen($options['content']) - 6 - 3);
+            }
+            if (substr($options['content'], 0, 4) == '</p>' &&
+                substr($options['content'], -3, 3) == '<p>') {
+                $options['content'] = substr($options['content'], 4, strlen($options['content']) - 4 - 3);
+            }
+            //echo '<br/>Stripped: \'' . htmlentities($options['content']) . '\'';
+        }
+
         while ($this->dataIterator->nextRow()) {
             if (empty($colNamesToSub)) {
                 echo $options['content'];
             }
             else {
+                $fields_with_file = null;
+                if ($filelinks != 'name' &&
+                        isset($this->dataIterator->row['fields_with_file']) &&
+                        $this->dataIterator->row['fields_with_file'] != null) {
+                    $fields_with_file = explode(',', $this->dataIterator->row['fields_with_file']);
+                }
                 $replacements = array();
                 foreach ($colNamesToSub as $aCol) {
-                    $replacements[] = htmlentities($this->dataIterator->row[$aCol], null, 'UTF-8');
+                    if ($fields_with_file && in_array($aCol, $fields_with_file)) {
+                        switch ($filelinks) {
+                            case 'url':
+                                $replacements[] = $this->plugin->getFileUrl($this->dataIterator->row[$submitTimeKeyName], $formName, $aCol);
+                                break;
+                            case 'link':
+                                $replacements[] =
+                                        '<a href="' .
+                                        $this->plugin->getFileUrl($this->dataIterator->row[$submitTimeKeyName], $formName, $aCol) .
+                                        '">' .
+                                        htmlentities($this->dataIterator->row[$aCol], null, 'UTF-8') .
+                                        '</a>';
+                                break;
+                            case 'image':
+                            case 'img':
+                                $replacements[] =
+                                        '<img src="' .
+                                        $this->plugin->getFileUrl($this->dataIterator->row[$submitTimeKeyName], $formName, $aCol) .
+                                        '" alt="' .
+                                        htmlentities($this->dataIterator->row[$aCol], null, 'UTF-8') .
+                                        '" />';
+                                break;
+                            case 'name':
+                            default:
+                                $replacements[] = htmlentities($this->dataIterator->row[$aCol], null, 'UTF-8');
+                        }
+                    }
+                    else {
+                        $replacements[] = htmlentities($this->dataIterator->row[$aCol], null, 'UTF-8');
+                    }
+                }
+                // Preserve line breaks in the field
+                foreach ($replacements as $i => $repl) {
+                    $replacements[$i] = str_replace("\r\n", '<br/>', $replacements[$i]); // preserve DOS line breaks
+                    $replacements[$i] = str_replace("\n", '<br/>', $replacements[$i]); // preserve UNIX line breaks
                 }
                 echo str_replace($varNamesToSub, $replacements, $options['content']);
             }
-
         }
 
         if ($this->isFromShortCode) {

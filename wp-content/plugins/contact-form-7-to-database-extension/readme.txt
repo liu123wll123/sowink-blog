@@ -2,9 +2,9 @@
 Contributors: msimpson
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=NEVDJ792HKGFN&lc=US&item_name=Wordpress%20Plugin&item_number=cf7%2dto%2ddb%2dextension&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted
 Tags: contact form,database
-Requires at least: 2.9
-Tested up to: 3.1
-Stable tag: 1.8.2
+Requires at least: 3.0
+Tested up to: 3.2.1
+Stable tag: 2.0
 
 Extension to the Contact Form 7 plugin that saves submitted form data to the database.
 
@@ -17,8 +17,9 @@ And if you get a lot of form submissions, then you end up sorting through a lot 
 This plugin-to-a-plugin provides that functionality.
 
 You will need to have CF7 and/or FSCF installed along with this plugin.
-This plugin also puts a menu item in the Administration Plugins menu where you can see the data in the database.
-You can also use the [cfdb-table], [cfdb-datatable], [cfdb-value] and [cfdb-json] shortcodes to display the data on a non-admin page on your site.
+When using CF7, this plugin also puts a menu item in the Administration Plugins menu where you can see the data in the database.
+When using FSCF, this plugin puts links on its Admin page.
+You can also use the [cfdb-html], [cfdb-table], [cfdb-datatable], [cfdb-value] and [cfdb-json] shortcodes to display the data on a non-admin page on your site.
 
 Disclaimer: I am not the maker of Contact Form 7 nor Fast Secure Contact Form and am not associated with the development of those plugins.
 
@@ -43,20 +44,22 @@ Refer the <a href="http://cfdbplugin.com/">Plugin Site</a>
 
 * Contact Form 7 Users: In the admin page, under CF7's top level "Contact" admin menu. Look for "Contact" -> "Database"
 * Fast Secure Contact Form Users: In the admin page, Plugins -> FS Contact Form Option, There is a "Database" link at the top of the page
-* For a direct link, use http://<your-wordpress-site>/wp-admin/admin.php?page=CF7DBPluginSubmissions
+* For a direct link, use http://&lt;your-wordpress-site&gt;/wp-admin/admin.php?page=CF7DBPluginSubmissions
 
 = Can I display form data on a non-admin web page or in a post? =
 
-Yes, <a href="http://cfdbplugin.com/?page_id=89">documentation on shortcodes</a> `[cfdb-datatable]`, `[cfdb-table]`, `[cfdb-json]` and `[cfdb-value]`
+Yes, <a href="http://cfdbplugin.com/?page_id=89">documentation on shortcodes</a> `[cfdb-html]`, `[cfdb-datatable]`, `[cfdb-table]`, `[cfdb-json]` and `[cfdb-value]`, etc.
 
 = What is the name of the table where the data is stored? =
 
-`wp_CF7DBPlugin_SUBMITS`
+`wp_cf7dbplugin_submits`
 Note: if you changed your WordPress MySql table prefix from the default `wp_` to something else, then this table will also have that prefix instead of `wp_` (`$wpdb->prefix`)
+Note: previous to version 2.0, the table was named "wp_CF7DBPlugin_SUBMITS" but was changed to all-lowercase as part of the 2.0 upgrade.
 
 = If I uninstall the plugin, what happens to its data in the database? =
 
-The table and all its data are deleted when you uninstall. You can deactivate the plugin without loosing data.
+The table and all its data are deleted when you uninstall but you can change a setting on the options page to
+prevent it from being deleted. You can always deactivate the plugin without loosing data.
 
 
 == Screenshots ==
@@ -65,14 +68,52 @@ The table and all its data are deleted when you uninstall. You can deactivate th
 
 == Changelog ==
 
+= 2.0.1 =
+* Fixed bug where cfdb-count always gave total, ignoring filters
+* Added 'percent' function to cfdb-count
+
+= 2.0 =
+* Data editing support in conjunction with Contact Form to Database Edit plugin
+* Name of table that stores data was down-cased from wp_CF7DBPlugin_SUBMITS to wp_cf7dbplugin_submits to avoid issues
+ described in http://wordpress.org/support/topic/cf7-and-cfdb-not-saving-submissions
+
+= 1.8.8 =
+* Bug fix: when using "filter" operators < and > where not working in cases where they were represented &amp;gt; and &amp;lt; HTML codes
+* Bug fix: "orderby" in shortcode was ignoring if ordered by "Submitted" or "submit_time"
+* Filter operations now try to do numeric comparisons when possible
+* Can now use "submit_time" field in "filter" to filter on the timestamp float.
+* [cfdb-html] now preserves line breaks in fields by converting new lines to BR tags.
+* CFDBFormIterator now includes a 'submit_time' field showing the raw timestamp
+
+= 1.8.7 =
+* [cfdb-html] now has wpautop option
+* Form input is now always run through stripslashes() regardless of whether or not get_magic_quotes_gpc is on. This is to be consistent with wp_magic_quotes always being called
+
+= 1.8.6 =
+* New shortcode: [cfdb-export-link]
+* Bug fix in JSON output
+
+= 1.8.5 =
+* Added Shortcode builder page
+* [cf7db-count] shortcode now supports counting all forms using form="*" or a list of forms using form="form1,form2,form3"
+* [cf7db-html] now has "filelinks" option useful for displaying image uploads. 
+* Added options to turn on/off capturing form submissions from CF7 and FSCF
+
+= 1.8.4 =
+* Added cfdb_submit hook. See http://cfdbplugin.com/?page_id=377
+* Added delimiter option for [cfdb-value] shortcode, e.g. [cfdb-value delimiter=',']
+* Bug fix related to cfdb-value when not used as a shortcode (it was not observing show & hide options)
+* Now including DataTables distribution inside this distribution so that page does not reference scripts from another site (so sites using https have everything encrypted on the page)
+* In [cfdb-html] shortcode, now removing undesired leading "br" tag and ending "p" tag that WordPress injects. This was messing up table rows (tr tags) in the shortcode because WP was injecting line breaks between the rows.
+
 = 1.8.3 =
 * Minor bug fixes.
 
- = 1.8.2 =
+= 1.8.2 =
 * Minor bug fixes.
 * Added option to not delete data on uninstall
 
-  = 1.8.1 =
+= 1.8.1 =
 * Fixed bug introduced in 1.8 where deleting individual rows from the admin page did nothing.
 
 = 1.8 =

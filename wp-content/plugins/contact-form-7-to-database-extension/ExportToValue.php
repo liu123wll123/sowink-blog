@@ -25,6 +25,16 @@ require_once('CFDBExport.php');
 class ExportToValue extends ExportBase implements CFDBExport {
 
     public function export($formName, $options = null) {
+
+        // Allow for multiple form name inputs, comma-delimited
+        $tmp = explode(',', $formName);
+        if (count($tmp) > 1) {
+            $formName = &$tmp;
+        }
+        else if ($formName == '*') {
+            $formName = null; // Allow for no form specified implying all forms
+        }
+
         $this->setOptions($options);
         $this->setCommonOptions();
 
@@ -36,23 +46,34 @@ class ExportToValue extends ExportBase implements CFDBExport {
 
         // See if a function is to be applied
         $funct = null;
+        $delimiter = ', ';
         if ($this->options && is_array($this->options)) {
             if (isset($this->options['function'])) {
                 $funct = $this->options['function'];
             }
+            if (isset($this->options['delimiter'])) {
+                $delimiter = $this->options['delimiter'];
+            }
         }
 
         // Headers
-        $this->echoHeaders('Content-Type: text/plain; charset=UTF-8');
+        // don't set content type to text because in some browsers this becomes
+        // the content type for the whole HTML page. 
+        $this->echoHeaders(); //'Content-Type: text/plain; charset=UTF-8');
 
         // Get the data
         $this->setDataIterator($formName);
 
-        if ($funct == 'count' &&
-                count($this->showColumns) == 0 &&
-                count($this->hideColumns) == 0) {
-            // Just count the number of entries in the database
-            return $this->getDBRowCount($formName);
+        // count function or coming from cfdb-count shortcode
+        if (count($this->showColumns) == 0 &&
+            count($this->hideColumns) == 0) {
+            if ($funct == 'count') {
+                $count = 0;
+                while ($this->dataIterator->nextRow()) {
+                    $count += 1;
+                }
+                return $count;
+            }
         }
 
 
@@ -78,12 +99,14 @@ class ExportToValue extends ExportBase implements CFDBExport {
                     while ($this->dataIterator->nextRow()) {
                         foreach ($this->dataIterator->displayColumns as $col) {
                             $val = $this->dataIterator->row[$col];
-                            if ($min === null) {
-                                $min = $val;
-                            }
-                            else {
-                                if ($val < $min) {
+                            if (is_numeric($val)) {
+                                if ($min === null) {
                                     $min = $val;
+                                }
+                                else {
+                                    if ($val < $min) {
+                                        $min = $val;
+                                    }
                                 }
                             }
                         }
@@ -101,12 +124,14 @@ class ExportToValue extends ExportBase implements CFDBExport {
                     while ($this->dataIterator->nextRow()) {
                         foreach ($this->dataIterator->displayColumns as $col) {
                             $val = $this->dataIterator->row[$col];
-                            if ($max === null) {
-                                $max = $val;
-                            }
-                            else {
-                                if ($val > $max) {
+                            if (is_numeric($val)) {
+                                if ($max === null) {
                                     $max = $val;
+                                }
+                                else {
+                                    if ($val > $max) {
+                                        $max = $val;
+                                    }
                                 }
                             }
                         }
@@ -124,7 +149,9 @@ class ExportToValue extends ExportBase implements CFDBExport {
                     $sum = 0;
                     while ($this->dataIterator->nextRow()) {
                         foreach ($this->dataIterator->displayColumns as $col) {
-                            $sum = $sum + $this->dataIterator->row[$col];
+                            if (is_numeric($this->dataIterator->row[$col])) {
+                                $sum = $sum + $this->dataIterator->row[$col];
+                            }
                         }
                     }
                     if ($this->isFromShortCode) {
@@ -140,8 +167,10 @@ class ExportToValue extends ExportBase implements CFDBExport {
                     $count = 0;
                     while ($this->dataIterator->nextRow()) {
                         foreach ($this->dataIterator->displayColumns as $col) {
-                            $count += 1;
-                            $sum += $this->dataIterator->row[$col];
+                            if (is_numeric($this->dataIterator->row[$col])) {
+                                $count += 1;
+                                $sum += $this->dataIterator->row[$col];
+                            }
                         }
                     }
                     $mean = $sum / $count;
@@ -150,6 +179,35 @@ class ExportToValue extends ExportBase implements CFDBExport {
                     }
                     else {
                         echo $mean;
+                        return;
+                    }
+
+                case 'percent':
+                    $count = 0;
+                    while ($this->dataIterator->nextRow()) {
+                        foreach ($this->dataIterator->displayColumns as $col) {
+                            $count += 1;
+                        }
+                    }
+
+                    $total = $this->getDBRowCount($formName);
+                    $numShowCols = count($this->showColumns);
+                    if ($numShowCols > 1) {
+                        $total = $total * $numShowCols;
+                    }
+                    else if ($numShowCols == 0) {
+                        $total = $total * count($this->dataIterator->displayColumns);
+                    }
+
+                    $percentNum = 100.0 * $count / $total;
+                    $percentDisplay = round($percentNum) . '%';
+                    //$percentDisplay = "$count / $total = $percentNum as $percentDisplay"; // debug
+
+                    if ($this->isFromShortCode) {
+                        return $percentDisplay;
+                    }
+                    else {
+                        echo $percentDisplay;
                         return;
                     }
             }
@@ -173,7 +231,7 @@ class ExportToValue extends ExportBase implements CFDBExport {
                     echo $outputData[0];
                     break;
                 default:
-                    echo implode($outputData, ', ');
+                    echo implode($delimiter, $outputData);
                     break;
             }
             $output = ob_get_contents();
@@ -183,16 +241,16 @@ class ExportToValue extends ExportBase implements CFDBExport {
             return $output;
         }
         else {
+            $first = true;
             while ($this->dataIterator->nextRow()) {
-                $first = true;
-                foreach ($this->dataIterator->row as $val) {
+                foreach ($this->dataIterator->displayColumns as $col) {
                     if ($first) {
                         $first = false;
                     }
                     else {
-                        echo ', ';
+                        echo $delimiter;
                     }
-                    echo $val;
+                    echo  $this->dataIterator->row[$col];
                 }
             }
         }

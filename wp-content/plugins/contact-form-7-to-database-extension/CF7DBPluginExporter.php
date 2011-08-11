@@ -63,8 +63,28 @@ class CF7DBPluginExporter {
 
         switch ($encoding) {
             case 'HTML':
-                require_once('ExportToHtml.php');
-                $exporter = new ExportToHtml();
+                require_once('ExportToHtmlTable.php');
+                $exporter = new ExportToHtmlTable();
+                $exporter->export($formName, $options);
+                break;
+            case 'DT':
+                require_once('ExportToHtmlTable.php');
+                if (!is_array($options)) {
+                    $options = array();
+                }
+                $options['useDT'] = true;
+                if (!isset($options['printScripts'])) {
+                    $options['printScripts'] = true;
+                }
+                if (!isset($options['printStyles'])) {
+                    $options['printStyles'] = 'true';
+                }
+                $exporter = new ExportToHtmlTable();
+                $exporter->export($formName, $options);
+                break;
+            case 'HTMLTemplate':
+                require_once('ExportToHtmlTemplate.php');
+                $exporter = new ExportToHtmlTemplate();
                 $exporter->export($formName, $options);
                 break;
             case 'IQY':
@@ -100,6 +120,17 @@ class CF7DBPluginExporter {
                 break;
             case 'VALUE':
                 require_once('ExportToValue.php');
+                $exporter = new ExportToValue();
+                $exporter->export($formName, $options);
+                break;
+            case 'COUNT':
+                require_once('ExportToValue.php');
+                if (!is_array($options)) {
+                    $options = array();
+                }
+                $options['function'] = 'count';
+                unset($options['show']);
+                unset($options['hide']);
                 $exporter = new ExportToValue();
                 $exporter->export($formName, $options);
                 break;

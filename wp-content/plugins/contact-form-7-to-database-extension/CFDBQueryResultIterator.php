@@ -74,7 +74,7 @@ class CFDBQueryResultIterator {
     /**
      * @var array
      */
-    var $fileColumns;
+//    var $fileColumns;
 
     /**
      * @var bool
@@ -82,6 +82,12 @@ class CFDBQueryResultIterator {
     var $onFirstRow = false;
 
 
+    /**
+     * @param  $sql string
+     * @param  $rowFilter CF7DBEvalutator|CF7FilterParser|CF7SearchEvaluator
+     * @param array $queryOptions array
+     * @return
+     */
     public function query(&$sql, &$rowFilter, $queryOptions = array()) {
         $this->rowFilter = $rowFilter;
         $this->results = null;
@@ -102,13 +108,11 @@ class CFDBQueryResultIterator {
 
         // For performance reasons, we bypass $wpdb so we can call mysql_unbuffered_query
         $con = mysql_connect(DB_HOST, DB_USER, DB_PASSWORD, true);
-        if (function_exists('mysql_set_charset')) { // PHP 5 >= 5.2.3
-            mysql_set_charset('utf8', $con);
-        }
         if (!$con) {
             trigger_error("MySQL Connection failed: " . mysql_error(), E_USER_NOTICE);
             return;
         }
+        mysql_query('SET NAMES utf8', $con);
         if (!mysql_select_db(DB_NAME, $con)) {
             trigger_error("MySQL DB Select failed: " . mysql_error(), E_USER_NOTICE);
             return;
@@ -158,11 +162,15 @@ class CFDBQueryResultIterator {
 
             // Format the date
             $submitTime = $this->row['Submitted'];
+            $this->row['submit_time'] = $submitTime;
             $this->row['Submitted'] = $this->plugin->formatDate($submitTime);
 
             // Determine if row is filtered
-            if ($this->rowFilter && !$this->rowFilter->evaluate($this->row)) {
-                continue;
+            if ($this->rowFilter) {
+                $match = $this->rowFilter->evaluate($this->row);
+                if (!$match) {
+                    continue;
+                }
             }
 
             $this->idx += 1;
@@ -190,5 +198,14 @@ class CFDBQueryResultIterator {
         return $this->row ? true : false;
     }
 
-
+    /**
+     * If you do not iterate over all the rows returned, be sure to call this function
+     * when done with the result set to free it.
+     * @return void
+     */
+    public function freeResults() {
+        if ($this->results) {
+            mysql_free_result($this->results);
+        }
+    }
 }

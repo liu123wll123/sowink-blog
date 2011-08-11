@@ -2,3 +2,4 @@ wp-config.php
 logs/
 wp-content/backup-db
 wp-content/uploads
+wp-content/upgrade
