@@ -25,7 +25,7 @@ Be inspired, but please don't steal...
 	<?php if (is_single() || is_page() ) : if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
 	<meta name="description" content="<?php the_excerpt_rss(); ?>" />
 	<?php endwhile; endif; elseif(is_home()) : ?>
-	<meta name="description" content="<?php bloginfo('description'); ?>" />
+	<meta name="description" content="SoWink aims to revolutionize your dating world by making it ridiculously easy for you to brush up on dating tips, etiquette, relationship advice and other related insights on how to become the best you that you can be — never again let the person of your dreams slip away!" />
 	<?php endif; ?>
 	
 	<!-- import required theme styles -->
