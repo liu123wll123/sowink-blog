@@ -591,3 +591,8 @@ function twentyeleven_body_classes( $classes ) {
 }
 add_filter( 'body_class', 'twentyeleven_body_classes' );
 
+function display_post_instructions() {
+	echo '<p style="color:red; text-decoration:blink; text-align:center;">Creating or editing a post creates or updates a newsfeed element on the SoWink website. Click HELP in the top right corner of this page to get a how-to!</p>';
+}
+
+add_action( 'add_meta_boxes', 'display_post_instructions' ); 

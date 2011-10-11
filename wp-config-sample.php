@@ -80,6 +80,28 @@ define('WPLANG', '');
  */
 define('WP_DEBUG', false);
 
+// ** Constants helping the communication between the SoWink website amd the SoWink blog. */
+
+/** Url for the SoWink website */
+define('SOWINK_COM_URL',				'http://192.168.1.17:8000');
+/** Url of the request that creates/updates a newsfeed element when the blog site calls it. */
+define('CREATEPOST_BLOG_URL',			'http://192.168.1.17:8000/notify/create_notice_from_blog');
+/** Path to a pengwink picture. 
+ *  If the blogpost contains no images, the newsfeed falls back to it. 
+ */
+define('SOWINK_AVATAR_IMAGE_URL',		'img/102-pengwink.jpg');
+/** 
+ * The blog has to send this key along with the c reate newsfeed item request
+ * so the SoWink website authenticates it. Encrypted by HTTPS.
+ */
+define('BLOG_AUTH_KEY',	'SWbLoGpAsS1');
+/*
+ * The newsfeed gets a truncated version of the post content 
+ * if the author didn't provide a summary
+ */
+define('TRUNCATE_BLOGPOST',	79);
+
+
 /* That's all, stop editing! Happy blogging. */
 
 /** Absolute path to the WordPress directory. */

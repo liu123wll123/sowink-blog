@@ -12,55 +12,62 @@ function send_post_to_newsfeed($post_id){
 
     $post_to_send = get_post($post_id);
     
-    // it gets the first picture from the gallery. Note: the order of the
-    // images in the gallery is independent from the order in that they 
-    // show up in the post
-    $picture = get_images_from_post($post_id);
-    // if there's no images at all, it falls back to a default image
-    if(!isset($picture)) $picture = SOWINK_AVATAR_IMAGE_URL;
-  
+    // It gets the first picture from the gallery (order field ==1 ).
+    // Note: the order of the images in the gallery is independent 
+    // from the order in that they show up in the blogpost.
+    $picture = get_order1_img_from_post($post_id);
+    
+    // Get the summary custom field.
+    $summary = get_post_meta($post_id, 'Summary', TRUE);
+    // Check if it's null or an emty string.
+    if(!isset($summary) || 
+    		(strlen(trim(preg_replace('/\xc2\xa0/',' ',$s))) == 0)){
+      	// Truncate text (but keep whole words) 
+        $text = substr($post_to_send->post_content,0,TRUNCATE_BLOGPOST); 
+        $text = substr($text,0,strrpos($text,' '));
+        $text = $text."..."; 
+    	$html = $text;
+    }
+    else $html = $summary;
+  	  	
     $body = array(				
         'post_id' => $post_to_send->ID,
         'creator' => 1,
         'created' => $post_to_send->post_date,
         'title' => $post_to_send->post_title,
-        'html' => $post_to_send->post_content,
+        'html' => $html,
         'picture' => $picture,
         'for_user' => 2,
         'blog_auth_key' => BLOG_AUTH_KEY 
     );
 
-    $url = CREATEPOST_BLOG_URL;
     $request = new WP_Http;
-    $result = $request->request($url, 
+    $result = $request->request(CREATEPOST_BLOG_URL, 
                                 array('method' => 'POST', 
                                       'body' => $body) );
     return $result['response']['body'];
 }
 
-function get_images_from_post($post_id){
-    // Get images for this post
-    $arrImages =& get_children(
-            'post_type=attachment&post_mime_type=image&post_parent='.
-             $post_id);
- 	    
-    // If images exist for this page
-    if($arrImages){
- 
-        // Get array keys representing attached image numbers
-        $arrKeys = array_keys($arrImages);
-  
-        // Get the first image attachment
-        $iNum = $arrKeys[0];
- 
-        // Get the thumbnail url for the attachment
-        // $sThumbUrl = wp_get_attachment_thumb_url($iNum);
- 
-        // Full size image instead of the thumbnail
-        $sImageUrl = wp_get_attachment_url($iNum);
+function get_order1_img_from_post($post_id){
 
-        return($sImageUrl);
-    }
+	// Get first image
+ 	$args = array(
+		'post_mime_type' => 'image',
+		'post_parent' => $post_id,
+		'post_status' => null,
+		'post_type' => 'attachment'
+	);
+ 	$images = get_children($args);
+ 	 	
+    // If images exist for this page then take the one that has it's order
+    // field set to 1 (wp admin area)
+    if($images){
+        $img_url = '';
+ 		foreach ($images as $image){
+ 			if ($image->menu_order == 1)
+				return $image->guid;
+		} 
+    } 
 }
 
 do_action( 'send_post_to_newsfeed', $post_id );
